@@ -1,57 +1,66 @@
 const express = require("express");
-const ProdModel = require("./prod.model");
+const bcrypt = require("bcrypt/bcrypt")
+const jwt = require("jsonwebtoken");
+const UserModel = require("./User.model");
+
 
 const app = express.Router();
 
 
-app.post("/", async (req, res) => {
-  try {
-    let newUser = await ProdModel.create(req.body);
-    res.send(newUser);
-  } catch (error) {
-    res.status(500).send(error.message);
-  }
-});
+app.post("/signup", (req, res) => {
+  const {email, password} = req.body;
+  bcrypt.hash(password, 5, async function(err, hash) {
+      if(err){
+          res.send("Something went wrong")
+      }
+      const user = new UserModel({
+          email,
+          password : hash
+      })
+      try{
+          await user.save()
+          res.json({msg : "Signup is successfull"})
+      }
+      catch(err){
+          console.log(err)
+          res.send("Something wrong")
+      }
+  });
+})
 
-app.get("/", async (req, res) => {
-  try {
-    let { category,order,page } = req.query;
-    let data = await ProdModel.find((category)?{category : category}:{})
-    .sort({
-      postedAt: order == "asc" || order == "ASC" ? 1 : -1,
-    }).skip((page-1)*4)
-    .limit(4);
-    res.send(data);
-  } catch (error) {
-    res.status(500).send(error.message);
+app.post("/login", async (req, res) => {
+  const {email, password} = req.body;
+  const user = await UserModel.findOne({email})
+  const hash = user.password
+  bcrypt.compare(password, hash, function(err, result) {
+      if(err){
+          res.send("Something went wrong")
+      }
+      if(result){
+          const token = jwt.sign({ userId : user._id }, "srb");
+          res.json({message : "Login Successfull",token})
+      }
+      else{
+          res.send("Invalid Credentials")
+      }
+  });
+})
+const authenticate = (req,res,next) =>{
+  if(!req.headers.authorization){
+      return res.send("Login First");
   }
-});
-
-app.get("/:name", async (req, res) => {
-  let {name}=req.params;
-  let { category,order,page } = req.query;
-  try {
-    let data = await ProdModel.find((category)?{name : name,category:category}:{name : name})
-    .sort({
-      postedAt: order == "asc" || order == "ASC" ? 1 : -1,
-    }).skip((page-1)*4)
-    .limit(4);
-    res.send(data);
-  } catch (error) {
-    res.status(500).send(error.message);
-  }
-});
-
-app.delete("/:id", async (req, res) => {
-  let {id}=req.params;
-  console.log(id)
-  try {
-    let data = await ProdModel.findByIdAndDelete(id)
-    res.send("Deleted");
-  } catch (error) {
-    res.status(500).send(error.message);
-  }
-});
+  const token = req.headers.authorization.split(" ")[1]
+  jwt.verify(token,"srb",(err,decode) =>{
+      if(err){
+          return res.send("Login Please");
+      }
+      next()
+  })
+}
+app.use(authenticate)
+app.get("/dashboard",(req,res)=>{
+  res.json({message:"You can access"})
+})
 
 
 module.exports = app;
