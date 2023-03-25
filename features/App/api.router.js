@@ -1,7 +1,9 @@
 const express = require("express");
 const bcrypt = require("bcrypt/bcrypt")
 const jwt = require("jsonwebtoken");
-const UserModel = require("./User.model");
+const UserModel = require("./Models/User.model");
+const SprintModel = require("./Models/Sprint.model");
+const TaskModel = require("./Models/Task.model");
 
 
 const app = express.Router();
@@ -28,7 +30,7 @@ app.post("/signup", (req, res) => {
   });
 })
 
-app.post("/login", async (req, res) => {
+app.post("/signin", async (req, res) => {
   const {email, password} = req.body;
   const user = await UserModel.findOne({email})
   const hash = user.password
@@ -57,10 +59,52 @@ const authenticate = (req,res,next) =>{
       next()
   })
 }
-app.use(authenticate)
+// app.use(authenticate)
 app.get("/dashboard",(req,res)=>{
   res.json({message:"You can access"})
 })
 
+
+app.post("/sprints",async(req,res)=>{
+    let {sprint}=req.body;
+    const user = await SprintModel.findOne({sprint});
+    if(user){
+        res.send("exists")
+    }else{
+        const user=await SprintModel.create(req.body);
+        res.send("notexists")
+    }
+})
+app.get("/sprints",async(req,res)=>{
+    const user = await SprintModel.find();
+    res.send(user)
+})
+
+app.post("/tasks",async(req,res)=>{
+    let {name}=req.body;
+    const user = await TaskModel.findOne({name});
+    if(user){
+        res.send("exists")
+    }else{
+        const user=await TaskModel.create(req.body);
+        res.send("notexists")
+    }
+})
+app.get("/tasks",async(req,res)=>{
+    const user = await TaskModel.find();
+    res.send(user)
+})
+app.patch("/tasks/:id",async(req,res)=>{
+    let {id}=req.params;
+    const user = await TaskModel.findByIdAndUpdate(id,req.body);
+    res.send(user)
+})
+app.delete("/tasks/:id",async(req,res)=>{
+
+    let {id}=req.params;
+    console.log(id)
+    const user = await TaskModel.findByIdAndDelete(id);
+    res.send("deleted")
+})
 
 module.exports = app;
