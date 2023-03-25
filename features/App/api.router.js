@@ -10,12 +10,14 @@ const app = express.Router();
 
 
 app.post("/signup", (req, res) => {
-  const {email, password} = req.body;
+  const {email, password,firstname,lastname} = req.body;
   bcrypt.hash(password, 5, async function(err, hash) {
       if(err){
           res.send("Something went wrong")
       }
       const user = new UserModel({
+        firstname,
+        lastname,
           email,
           password : hash
       })
