@@ -81,6 +81,13 @@ app.get("/sprints",async(req,res)=>{
     const user = await SprintModel.find();
     res.send(user)
 })
+app.delete("/sprints/:name",async(req,res)=>{
+    let {name}=req.params;
+    const user = await SprintModel.findOneAndDelete({sprint:name})
+    const user1 = await TaskModel.deleteMany({sprint:name})
+    
+    res.send("deleted")
+})
 
 app.post("/tasks",async(req,res)=>{
     let {name}=req.body;
