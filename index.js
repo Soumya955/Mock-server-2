@@ -1,22 +1,17 @@
-const express = require("express");
-var cors = require('cors')
- 
+const express=require("express")
+const cors=require("cors")
 
+const  ApiRouter=require("./features/App/api.router.js")
 
-const connect = require(`./configs/db`);
-const AppRouter = require(`./features/App/api.router`);
-
-
-const app = express();
+const app=express()
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(cors())
+app.use(cors());
 
-app.use("/api", AppRouter);
+app.use("/api",ApiRouter);
 
-app.listen(8080, async () => {
-  await connect();
-  console.log("db started");
-  console.log(`server started on port ${8080}`);
-});
+
+app.listen(8080,()=>console.log("server started"))
+
+
